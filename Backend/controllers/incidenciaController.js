@@ -13,7 +13,7 @@ const incidenciaController = {
             const [rows] = await db.query(sql);
             res.json(rows);
         } catch (err) {
-            // Si ocurre un error al obtener las incidencias, responde con un error 500 y el mensaje del error
+            console.error("❌ Error en getAll:", err);
             res.status(500).json({ error: 'Error al obtener incidencias: ' + err.message });
         }
     },
@@ -21,30 +21,43 @@ const incidenciaController = {
     // Crear incidencia
     create: async (req, res) => {
         const { emp_no, tipo, fecha, descripcion } = req.body;
+        // Por defecto, toda nueva incidencia nace como 'Pendiente'
+        const estatusInicial = 'Pendiente'; 
+        
         try {
-            // Inserta una nueva incidencia en la base de datos usando los datos proporcionados en el cuerpo de la solicitud.
             const [result] = await db.query(
-                'INSERT INTO incidencias_rrhh (emp_no, tipo, fecha, descripcion) VALUES (?, ?, ?, ?)',
-                [emp_no, tipo, fecha, descripcion]
+                'INSERT INTO incidencias_rrhh (emp_no, tipo, fecha, descripcion, estatus) VALUES (?, ?, ?, ?, ?)',
+                [emp_no, tipo, fecha, descripcion, estatusInicial]
             );
-            // Responde con un mensaje de éxito y el ID de la nueva incidencia creada. 
-            res.status(201).json({ message: 'Incidencia creada', id: result.insertId });
+            res.status(201).json({ 
+                message: 'Incidencia creada con éxito', 
+                id_incidencia: result.insertId 
+            });
         } catch (err) {
-            // Si ocurre un error al crear la incidencia, responde con un error 500 y el mensaje del error
-            res.status(500).json({ error: 'Error al crear: ' + err.message });
+            console.error("❌ Error en create:", err);
+            res.status(500).json({ error: 'Error al crear la incidencia: ' + err.message });
         }
     },
 
-    // Actualizar estatus (Justificada, Pendiente, etc.)
+    // Actualizar estatus (Aprobado, Rechazado, Pendiente)
     updateStatus: async (req, res) => {
-        const { id } = req.params;
+        const { id } = req.params; // Este 'id' viene de la ruta /incidencias/:id
         const { estatus } = req.body;
+
         try {
-            // Actualiza el estatus de una incidencia específica usando su ID y el nuevo estatus proporcionado en el cuerpo de la solicitud.
-            await db.query('UPDATE incidencias_rrhh SET estatus = ? WHERE id_incidencia = ?', [estatus, id]);
+            const [result] = await db.query(
+                'UPDATE incidencias_rrhh SET estatus = ? WHERE id_incidencia = ?', 
+                [estatus, id]
+            );
+
+            // Verificamos si realmente se encontró y actualizó la fila
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'No se encontró la incidencia con ID: ' + id });
+            }
+
             res.json({ message: 'Estatus actualizado correctamente' });
         } catch (err) {
-            // Si ocurre un error al actualizar el estatus, responde con un error 500 y el mensaje del error
+            console.error("❌ Error en updateStatus:", err);
             res.status(500).json({ error: 'Error al actualizar: ' + err.message });
         }
     },
@@ -53,15 +66,21 @@ const incidenciaController = {
     delete: async (req, res) => {
         const { id } = req.params;
         try {
-            // Elimina una incidencia específica usando su ID proporcionado en los parámetros de la solicitud.
-            await db.query('DELETE FROM incidencias_rrhh WHERE id_incidencia = ?', [id]);
-            res.json({ message: 'Incidencia eliminada' });
+            const [result] = await db.query(
+                'DELETE FROM incidencias_rrhh WHERE id_incidencia = ?', 
+                [id]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'No se pudo eliminar: Incidencia no encontrada' });
+            }
+
+            res.json({ message: 'Incidencia eliminada correctamente' });
         } catch (err) {
-            // Si ocurre un error al eliminar la incidencia, responde con un error 500 y el mensaje del error
+            console.error("❌ Error en delete:", err);
             res.status(500).json({ error: 'Error al eliminar: ' + err.message });
         }
     }
 };
 
-// Exportamos el controlador para que pueda ser usado en las rutas
 module.exports = incidenciaController;
