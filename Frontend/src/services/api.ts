@@ -5,7 +5,22 @@ export const api = {
   getEmployees: () => fetch(`${BASE}/employees`).then(r => r.json()),
   getDepartments: () => fetch(`${BASE}/departments`).then(r => r.json()),
   
-  // --- INCIDENCIAS (Esta es la que te está dando el error) ---
+  // --- FOTOS (Esto arregla el error de tu imagen) ---
+  uploadEmployeePhoto: (emp_no: number, file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return fetch(`${BASE}/employees/${emp_no}/photo`, {
+      method: 'POST',
+      body: formData, // No necesita headers de JSON porque es un archivo
+    }).then(r => r.json());
+  },
+
+  deleteEmployeePhoto: (emp_no: number) => 
+    fetch(`${BASE}/employees/${emp_no}/photo`, {
+      method: 'DELETE'
+    }).then(r => r.json()),
+
+  // --- INCIDENCIAS ---
   getIncidencias: () => fetch(`${BASE}/incidencias`).then(r => r.json()),
   
   createIncidencia: (data: any) => fetch(`${BASE}/incidencias`, {

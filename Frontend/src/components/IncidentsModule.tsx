@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Trash2, Edit3, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { Incidencia, Employee } from '../types.js';
 import { api } from '../services/api';
 
@@ -8,7 +8,8 @@ export const IncidentsModule: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [formData, setFormData] = useState<Incidencia>({
     emp_no: 0,
     tipo: 'Falta',
@@ -39,9 +40,23 @@ export const IncidentsModule: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createIncidencia(formData);
+      // Limpiamos la fecha para MySQL (YYYY-MM-DD)
+      const dataToSend = { 
+        ...formData, 
+        fecha: formData.fecha.split('T')[0] 
+      };
+
+      if (editingId) {
+        // Modo Edición: Enviamos el objeto completo al endpoint de actualización
+        await api.updateIncidencia(editingId, dataToSend);
+      } else {
+        // Modo Creación
+        await api.createIncidencia(dataToSend);
+      }
+      
       setShowForm(false);
-      loadData();
+      setEditingId(null);
+      
       // Resetear formulario
       setFormData({
         emp_no: 0,
@@ -50,9 +65,27 @@ export const IncidentsModule: React.FC = () => {
         descripcion: '',
         estatus: 'Pendiente'
       });
+
+      // Recargar datos inmediatamente
+      await loadData();
+      
     } catch (err) {
-      console.error("Error al crear incidencia:", err);
+      console.error("Error al procesar incidencia:", err);
+      alert("No se pudieron guardar los cambios.");
     }
+  };
+
+  const handleEdit = (inc: Incidencia) => {
+    setEditingId(inc.id_incidencia || null);
+    setFormData({
+      emp_no: inc.emp_no,
+      tipo: inc.tipo,
+      fecha: inc.fecha.split('T')[0], 
+      descripcion: inc.descripcion,
+      estatus: inc.estatus
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id_incidencia: number) => {
@@ -67,9 +100,10 @@ export const IncidentsModule: React.FC = () => {
 
   const handleStatusChange = async (id_incidencia: number, newStatus: Incidencia['estatus']) => {
     try {
-      // Enviamos el objeto con el nuevo estatus al ID correcto
+      // Gracias al COALESCE en el backend, ahora podemos enviar solo el estatus
+      // y el resto de los valores se mantendrán intactos en la DB.
       await api.updateIncidencia(id_incidencia, { estatus: newStatus });
-      loadData(); // Refrescar la tabla para ver el cambio
+      loadData();
     } catch (err) {
       console.error("Error al actualizar estatus:", err);
     }
@@ -83,6 +117,8 @@ export const IncidentsModule: React.FC = () => {
     }
   };
 
+  if (loading) return <div className="p-8 text-center text-slate-500">Cargando incidencias...</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -91,16 +127,31 @@ export const IncidentsModule: React.FC = () => {
           <p className="text-slate-500">Registra y controla las novedades del personal</p>
         </div>
         <button 
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingId(null); 
+            setShowForm(!showForm);
+            if (!showForm) {
+                setFormData({
+                    emp_no: 0,
+                    tipo: 'Falta',
+                    fecha: new Date().toISOString().split('T')[0],
+                    descripcion: '',
+                    estatus: 'Pendiente'
+                });
+            }
+          }}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
         >
           <Plus className="w-5 h-5" />
-          Nueva Incidencia
+          {showForm ? 'Cerrar Formulario' : 'Nueva Incidencia'}
         </button>
       </div>
 
       {showForm && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm animate-in fade-in zoom-in duration-300">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">
+            {editingId ? 'Modificar Incidencia' : 'Registrar Nueva Incidencia'}
+          </h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Empleado</label>
@@ -110,7 +161,7 @@ export const IncidentsModule: React.FC = () => {
                 value={formData.emp_no}
                 onChange={e => setFormData({...formData, emp_no: parseInt(e.target.value)})}
               >
-                <option value="">Seleccionar empleado...</option>
+                <option value={0}>Seleccionar empleado...</option>
                 {employees.map(emp => (
                   <option key={emp.emp_no} value={emp.emp_no}>
                     {emp.first_name} {emp.last_name} (#{emp.emp_no})
@@ -118,7 +169,7 @@ export const IncidentsModule: React.FC = () => {
                 ))}
               </select>
             </div>
-            {/* ... Otros campos del formulario (Tipo, Fecha, Descripción) ... */}
+            
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Tipo de Incidencia</label>
               <select 
@@ -133,6 +184,7 @@ export const IncidentsModule: React.FC = () => {
                 <option value="Otro">Otro</option>
               </select>
             </div>
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Fecha</label>
               <input 
@@ -143,8 +195,9 @@ export const IncidentsModule: React.FC = () => {
                 onChange={e => setFormData({...formData, fecha: e.target.value})}
               />
             </div>
+
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-semibold text-slate-700">Descripción</label>
+              <label className="text-sm font-semibold text-slate-700">Descripción / Motivo</label>
               <textarea 
                 required
                 rows={3}
@@ -153,9 +206,21 @@ export const IncidentsModule: React.FC = () => {
                 onChange={e => setFormData({...formData, descripcion: e.target.value})}
               />
             </div>
+
             <div className="md:col-span-2 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
-              <button type="submit" className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-200">Guardar Registro</button>
+              <button 
+                type="button" 
+                onClick={() => { setShowForm(false); setEditingId(null); }} 
+                className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+              >
+                {editingId ? 'Guardar Cambios' : 'Guardar Registro'}
+              </button>
             </div>
           </form>
         </div>
@@ -168,7 +233,7 @@ export const IncidentsModule: React.FC = () => {
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Empleado</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Tipo</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Fecha</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Motivo</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Motivo</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Estatus</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Acciones</th>
             </tr>
@@ -189,7 +254,7 @@ export const IncidentsModule: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-slate-500 truncate max-w-[200px]" title={inc.descripcion}>
-                      {inc.descripcion || 'Sin descripción'}
+                      {inc.descripcion || '-'}
                     </p>
                   </td>
                   <td className="px-6 py-4">
@@ -207,18 +272,29 @@ export const IncidentsModule: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleDelete(inc.id_incidencia!)}
-                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleEdit(inc)}
+                        className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(inc.id_incidencia!)}
+                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {incidents.length === 0 && (
+          <div className="p-8 text-center text-slate-500">No hay incidencias registradas.</div>
+        )}
       </div>
     </div>
   );

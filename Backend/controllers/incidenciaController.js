@@ -1,8 +1,6 @@
-// Controlador para manejar las operaciones relacionadas con las incidencias de RRHH
 const db = require('../config/db');
 
 const incidenciaController = {
-    // Listar todas las incidencias con nombres de empleados (JOIN)
     getAll: async (req, res) => {
         try {
             const sql = `
@@ -18,51 +16,60 @@ const incidenciaController = {
         }
     },
 
-    // Crear incidencia
     create: async (req, res) => {
         const { emp_no, tipo, fecha, descripcion } = req.body;
-        // Por defecto, toda nueva incidencia nace como 'Pendiente'
         const estatusInicial = 'Pendiente'; 
-        
         try {
             const [result] = await db.query(
                 'INSERT INTO incidencias_rrhh (emp_no, tipo, fecha, descripcion, estatus) VALUES (?, ?, ?, ?, ?)',
                 [emp_no, tipo, fecha, descripcion, estatusInicial]
             );
-            res.status(201).json({ 
-                message: 'Incidencia creada con éxito', 
-                id_incidencia: result.insertId 
-            });
+            res.status(201).json({ message: 'Incidencia creada con éxito', id_incidencia: result.insertId });
         } catch (err) {
             console.error("❌ Error en create:", err);
             res.status(500).json({ error: 'Error al crear la incidencia: ' + err.message });
         }
     },
 
-    // Actualizar estatus (Aprobado, Rechazado, Pendiente)
     updateStatus: async (req, res) => {
-        const { id } = req.params; // Este 'id' viene de la ruta /incidencias/:id
-        const { estatus } = req.body;
-
+        const { id } = req.params;
+        // Extraemos los datos del body
+        const { emp_no, tipo, fecha, descripcion, estatus } = req.body;
+        
         try {
-            const [result] = await db.query(
-                'UPDATE incidencias_rrhh SET estatus = ? WHERE id_incidencia = ?', 
-                [estatus, id]
-            );
+            // Limpiamos la fecha solo si existe, si no, pasamos null
+            const fechaLimpia = fecha ? fecha.split('T')[0] : null;
 
-            // Verificamos si realmente se encontró y actualizó la fila
+            // Usamos COALESCE: si el parámetro es NULL, mantiene el valor actual de la columna
+            const sql = `
+                UPDATE incidencias_rrhh 
+                SET emp_no = COALESCE(?, emp_no), 
+                    tipo = COALESCE(?, tipo), 
+                    fecha = COALESCE(?, fecha), 
+                    descripcion = COALESCE(?, descripcion), 
+                    estatus = COALESCE(?, estatus) 
+                WHERE id_incidencia = ?`;
+                
+            const [result] = await db.query(sql, [
+                emp_no || null, 
+                tipo || null, 
+                fechaLimpia, 
+                descripcion || null, 
+                estatus || null, 
+                id
+            ]);
+
             if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'No se encontró la incidencia con ID: ' + id });
+                return res.status(404).json({ error: "No se encontró el registro" });
             }
 
-            res.json({ message: 'Estatus actualizado correctamente' });
+            res.json({ success: true, message: 'Actualizado correctamente' });
         } catch (err) {
-            console.error("❌ Error en updateStatus:", err);
-            res.status(500).json({ error: 'Error al actualizar: ' + err.message });
+            console.error("❌ Error en Update:", err);
+            res.status(500).json({ error: err.message });
         }
     },
 
-    // Eliminar incidencia
     delete: async (req, res) => {
         const { id } = req.params;
         try {
@@ -70,11 +77,9 @@ const incidenciaController = {
                 'DELETE FROM incidencias_rrhh WHERE id_incidencia = ?', 
                 [id]
             );
-
             if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'No se pudo eliminar: Incidencia no encontrada' });
+                return res.status(404).json({ error: 'No se encontró la incidencia' });
             }
-
             res.json({ message: 'Incidencia eliminada correctamente' });
         } catch (err) {
             console.error("❌ Error en delete:", err);
