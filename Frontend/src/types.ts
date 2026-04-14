@@ -6,6 +6,7 @@ export interface Employee {
   hire_date: string;
   puesto?: string;
   salary?: number;
+  department?: string;
   photo_url?: string | null;
 }
 

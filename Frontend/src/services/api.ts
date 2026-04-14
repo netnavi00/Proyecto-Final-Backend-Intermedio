@@ -1,17 +1,26 @@
 const BASE = 'http://localhost:3000/api';
 
 export const api = {
-  // --- EMPLEADOS ---
-  getEmployees: () => fetch(`${BASE}/employees`).then(r => r.json()),
+
+  getEmployeeById: (id: number) => 
+    fetch(`${BASE}/employees/${id}`).then(r => r.json()),
+
+  // --- DEPARTAMENTOS ---
   getDepartments: () => fetch(`${BASE}/departments`).then(r => r.json()),
   
-  // --- FOTOS (Esto arregla el error de tu imagen) ---
+  // Esta es la que usaremos para ver los empleados de un departamento
+  getEmployeesByDept: (deptNo: string) => 
+    fetch(`${BASE}/departments/${deptNo}/employees`).then(r => r.json()),
+
+  // --- EMPLEADOS ---
+  getEmployees: () => fetch(`${BASE}/employees`).then(r => r.json()),
+  
   uploadEmployeePhoto: (emp_no: number, file: File) => {
     const formData = new FormData();
     formData.append('photo', file);
     return fetch(`${BASE}/employees/${emp_no}/photo`, {
       method: 'POST',
-      body: formData, // No necesita headers de JSON porque es un archivo
+      body: formData,
     }).then(r => r.json());
   },
 
