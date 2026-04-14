@@ -8,11 +8,42 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  /* Cuando la clase .dark está activa en el html o body */
+  .dark {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased transition-colors duration-300;
+  }
+
+  /* Cambio de fondo global para el body en modo oscuro */
+  .dark body {
+    @apply bg-slate-900 text-slate-100;
   }
 }
 
+/* Scrollbar Personalizada para Dark Mode */
+@layer utilities {
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+  }
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-slate-900;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 rounded-full border-2 border-slate-900;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-600;
+  }
+}
+
+/* Animaciones (Se mantienen igual) */
 .animate-in {
   animation-duration: 0.5s;
   animation-fill-mode: both;

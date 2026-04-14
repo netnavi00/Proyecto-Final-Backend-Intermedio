@@ -3,7 +3,6 @@ import { Plus, Trash2, Edit3, AlertCircle, CheckCircle2, Clock } from 'lucide-re
 import { Incidencia, Employee } from '../types.js';
 import { api } from '../services/api';
 
-// Definimos la interfaz para recibir onUpdate desde App.tsx
 interface IncidentsModuleProps {
   onUpdate?: () => void;
 }
@@ -67,7 +66,6 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
         estatus: 'Pendiente'
       });
 
-      // Recargar datos locales y avisar al Dashboard (App.tsx)
       await loadData();
       if (onUpdate) onUpdate();
       
@@ -95,7 +93,6 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
     try {
       await api.deleteIncidencia(id_incidencia);
       await loadData();
-      // Avisar al Dashboard para actualizar el contador
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error al eliminar:", err);
@@ -106,7 +103,6 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
     try {
       await api.updateIncidencia(id_incidencia, { estatus: newStatus });
       await loadData();
-      // Avisar al Dashboard para actualizar el contador si el cambio afecta la métrica
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error al actualizar estatus:", err);
@@ -121,14 +117,14 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Cargando base de incidencias...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">Cargando base de incidencias...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Gestión de Incidencias</h2>
-          <p className="text-slate-500 font-medium">Registra y controla las novedades del personal</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Incidencias</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Registra y controla las novedades del personal</p>
         </div>
         <button 
           onClick={() => {
@@ -144,7 +140,7 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
                 });
             }
           }}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20"
         >
           <Plus className="w-5 h-5" />
           {showForm ? 'Cerrar Formulario' : 'Nueva Incidencia'}
@@ -152,16 +148,16 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
       </div>
 
       {showForm && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm animate-in fade-in zoom-in duration-300">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in zoom-in duration-300">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
             {editingId ? 'Modificar Incidencia' : 'Registrar Nueva Incidencia'}
           </h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Empleado</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Empleado</label>
               <select 
                 required
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-slate-900 dark:text-white"
                 value={formData.emp_no}
                 onChange={e => setFormData({...formData, emp_no: parseInt(e.target.value)})}
               >
@@ -175,9 +171,9 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Tipo de Incidencia</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Tipo de Incidencia</label>
               <select 
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-slate-900 dark:text-white"
                 value={formData.tipo}
                 onChange={e => setFormData({...formData, tipo: e.target.value as any})}
               >
@@ -190,22 +186,22 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Fecha</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Fecha</label>
               <input 
                 type="date"
                 required
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-slate-700"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-slate-700 dark:text-white"
                 value={formData.fecha}
                 onChange={e => setFormData({...formData, fecha: e.target.value})}
               />
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-slate-700">Descripción / Motivo</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Descripción / Motivo</label>
               <textarea 
                 required
                 rows={3}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none font-medium"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none font-medium text-slate-900 dark:text-white"
                 value={formData.descripcion}
                 onChange={e => setFormData({...formData, descripcion: e.target.value})}
               />
@@ -215,13 +211,13 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
               <button 
                 type="button" 
                 onClick={() => { setShowForm(false); setEditingId(null); }} 
-                className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all"
               >
                 {editingId ? 'Guardar Cambios' : 'Guardar Registro'}
               </button>
@@ -230,48 +226,48 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-colors">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Empleado</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Tipo</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Fecha</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Motivo</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Estatus</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider text-right">Acciones</th>
+            <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Empleado</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Tipo</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Fecha</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Motivo</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Estatus</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 font-medium">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700 font-medium">
             {incidents.map((inc) => {
               const emp = employees.find(e => e.emp_no === inc.emp_no);
               return (
-                <tr key={inc.id_incidencia} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={inc.id_incidencia} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-bold text-slate-800">
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
                       {emp ? `${emp.first_name} ${emp.last_name}` : `ID: ${inc.emp_no}`}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-700">{inc.tipo}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                  <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{inc.tipo}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                     {new Date(inc.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-slate-600 truncate max-w-[200px]" title={inc.descripcion}>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[200px]" title={inc.descripcion}>
                       {inc.descripcion || '-'}
                     </p>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100 w-fit">
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-100 dark:border-slate-700 w-fit">
                       {getStatusIcon(inc.estatus)}
                       <select 
-                        className="text-xs font-bold bg-transparent border-none focus:ring-0 cursor-pointer text-slate-800"
+                        className="text-xs font-bold bg-transparent border-none focus:ring-0 cursor-pointer text-slate-800 dark:text-slate-200"
                         value={inc.estatus}
                         onChange={e => handleStatusChange(inc.id_incidencia!, e.target.value as any)}
                       >
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Aprobado">Aprobado</option>
-                        <option value="Rechazado">Rechazado</option>
+                        <option className="dark:bg-slate-800" value="Pendiente">Pendiente</option>
+                        <option className="dark:bg-slate-800" value="Aprobado">Aprobado</option>
+                        <option className="dark:bg-slate-800" value="Rechazado">Rechazado</option>
                       </select>
                     </div>
                   </td>
@@ -279,14 +275,14 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
                     <div className="flex justify-end gap-1">
                       <button 
                         onClick={() => handleEdit(inc)}
-                        className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                        className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                         title="Editar"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(inc.id_incidencia!)}
-                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -299,7 +295,7 @@ export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) =>
           </tbody>
         </table>
         {incidents.length === 0 && (
-          <div className="p-12 text-center text-slate-500 font-bold italic bg-slate-50/50">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold italic bg-slate-50/50 dark:bg-slate-900/20">
             No hay incidencias registradas en el historial.
           </div>
         )}
