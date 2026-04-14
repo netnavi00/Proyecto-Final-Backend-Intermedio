@@ -3,7 +3,12 @@ import { Plus, Trash2, Edit3, AlertCircle, CheckCircle2, Clock } from 'lucide-re
 import { Incidencia, Employee } from '../types.js';
 import { api } from '../services/api';
 
-export const IncidentsModule: React.FC = () => {
+// Definimos la interfaz para recibir onUpdate desde App.tsx
+interface IncidentsModuleProps {
+  onUpdate?: () => void;
+}
+
+export const IncidentsModule: React.FC<IncidentsModuleProps> = ({ onUpdate }) => {
   const [incidents, setIncidents] = useState<Incidencia[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,24 +45,20 @@ export const IncidentsModule: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Limpiamos la fecha para MySQL (YYYY-MM-DD)
       const dataToSend = { 
         ...formData, 
         fecha: formData.fecha.split('T')[0] 
       };
 
       if (editingId) {
-        // Modo Edición: Enviamos el objeto completo al endpoint de actualización
         await api.updateIncidencia(editingId, dataToSend);
       } else {
-        // Modo Creación
         await api.createIncidencia(dataToSend);
       }
       
       setShowForm(false);
       setEditingId(null);
       
-      // Resetear formulario
       setFormData({
         emp_no: 0,
         tipo: 'Falta',
@@ -66,8 +67,9 @@ export const IncidentsModule: React.FC = () => {
         estatus: 'Pendiente'
       });
 
-      // Recargar datos inmediatamente
+      // Recargar datos locales y avisar al Dashboard (App.tsx)
       await loadData();
+      if (onUpdate) onUpdate();
       
     } catch (err) {
       console.error("Error al procesar incidencia:", err);
@@ -92,7 +94,9 @@ export const IncidentsModule: React.FC = () => {
     if (!confirm('¿Estás seguro de eliminar esta incidencia?')) return;
     try {
       await api.deleteIncidencia(id_incidencia);
-      loadData();
+      await loadData();
+      // Avisar al Dashboard para actualizar el contador
+      if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error al eliminar:", err);
     }
@@ -100,10 +104,10 @@ export const IncidentsModule: React.FC = () => {
 
   const handleStatusChange = async (id_incidencia: number, newStatus: Incidencia['estatus']) => {
     try {
-      // Gracias al COALESCE en el backend, ahora podemos enviar solo el estatus
-      // y el resto de los valores se mantendrán intactos en la DB.
       await api.updateIncidencia(id_incidencia, { estatus: newStatus });
-      loadData();
+      await loadData();
+      // Avisar al Dashboard para actualizar el contador si el cambio afecta la métrica
+      if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error al actualizar estatus:", err);
     }
@@ -117,14 +121,14 @@ export const IncidentsModule: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Cargando incidencias...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Cargando base de incidencias...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Gestión de Incidencias</h2>
-          <p className="text-slate-500">Registra y controla las novedades del personal</p>
+          <p className="text-slate-500 font-medium">Registra y controla las novedades del personal</p>
         </div>
         <button 
           onClick={() => {
@@ -154,10 +158,10 @@ export const IncidentsModule: React.FC = () => {
           </h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Empleado</label>
+              <label className="text-sm font-bold text-slate-700">Empleado</label>
               <select 
                 required
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
                 value={formData.emp_no}
                 onChange={e => setFormData({...formData, emp_no: parseInt(e.target.value)})}
               >
@@ -171,9 +175,9 @@ export const IncidentsModule: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Tipo de Incidencia</label>
+              <label className="text-sm font-bold text-slate-700">Tipo de Incidencia</label>
               <select 
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
                 value={formData.tipo}
                 onChange={e => setFormData({...formData, tipo: e.target.value as any})}
               >
@@ -186,22 +190,22 @@ export const IncidentsModule: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Fecha</label>
+              <label className="text-sm font-bold text-slate-700">Fecha</label>
               <input 
                 type="date"
                 required
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium text-slate-700"
                 value={formData.fecha}
                 onChange={e => setFormData({...formData, fecha: e.target.value})}
               />
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-semibold text-slate-700">Descripción / Motivo</label>
+              <label className="text-sm font-bold text-slate-700">Descripción / Motivo</label>
               <textarea 
                 required
                 rows={3}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none font-medium"
                 value={formData.descripcion}
                 onChange={e => setFormData({...formData, descripcion: e.target.value})}
               />
@@ -211,13 +215,13 @@ export const IncidentsModule: React.FC = () => {
               <button 
                 type="button" 
                 onClick={() => { setShowForm(false); setEditingId(null); }} 
-                className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancelar
               </button>
               <button 
                 type="submit" 
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
               >
                 {editingId ? 'Guardar Cambios' : 'Guardar Registro'}
               </button>
@@ -230,38 +234,38 @@ export const IncidentsModule: React.FC = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Empleado</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Tipo</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Fecha</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Motivo</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Estatus</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Acciones</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Empleado</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Tipo</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Fecha</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Motivo</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Estatus</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 font-medium">
             {incidents.map((inc) => {
               const emp = employees.find(e => e.emp_no === inc.emp_no);
               return (
                 <tr key={inc.id_incidencia} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-slate-800">
+                    <div className="text-sm font-bold text-slate-800">
                       {emp ? `${emp.first_name} ${emp.last_name}` : `ID: ${inc.emp_no}`}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{inc.tipo}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">
-                    {new Date(inc.fecha).toLocaleDateString('es-MX')}
+                  <td className="px-6 py-4 text-sm text-slate-700">{inc.tipo}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {new Date(inc.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-slate-500 truncate max-w-[200px]" title={inc.descripcion}>
+                    <p className="text-sm text-slate-600 truncate max-w-[200px]" title={inc.descripcion}>
                       {inc.descripcion || '-'}
                     </p>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100 w-fit">
                       {getStatusIcon(inc.estatus)}
                       <select 
-                        className="text-xs font-semibold bg-transparent border-none focus:ring-0 cursor-pointer text-slate-700"
+                        className="text-xs font-bold bg-transparent border-none focus:ring-0 cursor-pointer text-slate-800"
                         value={inc.estatus}
                         onChange={e => handleStatusChange(inc.id_incidencia!, e.target.value as any)}
                       >
@@ -272,16 +276,18 @@ export const IncidentsModule: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1">
                       <button 
                         onClick={() => handleEdit(inc)}
                         className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                        title="Editar"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(inc.id_incidencia!)}
                         className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                        title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -293,7 +299,9 @@ export const IncidentsModule: React.FC = () => {
           </tbody>
         </table>
         {incidents.length === 0 && (
-          <div className="p-8 text-center text-slate-500">No hay incidencias registradas.</div>
+          <div className="p-12 text-center text-slate-500 font-bold italic bg-slate-50/50">
+            No hay incidencias registradas en el historial.
+          </div>
         )}
       </div>
     </div>

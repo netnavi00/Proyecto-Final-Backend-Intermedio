@@ -25,14 +25,17 @@ export default function App() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [empRes, deptRes, countRes] = await Promise.all([
+      // Cambiamos api.getIncidenciasCount por api.getIncidencias para obtener el conteo real del array
+      const [empRes, deptRes, incidentsRes] = await Promise.all([
         api.getEmployees(),
         api.getDepartments(),
-        api.getIncidenciasCount().catch(() => ({ total: 0 }))
+        api.getIncidencias().catch(() => []) 
       ]);
+      
       setEmployees(empRes || []); 
       setDepartments(deptRes || []);
-      setIncidentsCount(countRes.total || 0);
+      // Sincronizamos el contador con el length del array que viene de la DB
+      setIncidentsCount(incidentsRes?.length || 0);
       setError(null);
     } catch (err) {
       setError('No se pudo conectar con el servidor.');
@@ -109,9 +112,9 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard title="Total Empleados" value={employees.length} icon={Users} color="bg-blue-500" />
               <StatCard title="Departamentos" value={departments.length} icon={Building2} color="bg-purple-500" />
+              {/* Card de Incidencias sincronizada */}
               <StatCard title="Nuevas Incidencias" value={incidentsCount} icon={AlertCircle} color="bg-amber-500" />
               
-              {/* Card de Estabilidad / Diversidad - ALTURA FIJA [102px] */}
               <div className="relative group bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-[102px]">
                 
                 {/* Flechas de Navegación */}
@@ -168,7 +171,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Resto del Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col h-[500px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -262,7 +264,7 @@ export default function App() {
       case 'employees': return <EmployeeTable employees={employees} onSelectEmployee={handleSelectEmployee} />;
       case 'employee-detail': return <EmployeeDetailView employee={selectedEmployee} onBack={() => setActiveTab('employees')} onUpdate={fetchData} />;
       case 'departments': return <DepartmentsModule onSelectEmployee={handleSelectEmployee} />;
-      case 'incidents': return <IncidentsModule />;
+      case 'incidents': return <IncidentsModule onUpdate={fetchData} />;
       default: return null;
     }
   };
