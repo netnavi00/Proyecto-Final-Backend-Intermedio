@@ -30,8 +30,20 @@ export const api = {
     }).then(r => r.json()),
 
   // --- INCIDENCIAS ---
-  getIncidencias: () => fetch(`${BASE}/incidencias`).then(r => r.json()),
+  // Corregido: Ahora usa la constante BASE definida arriba
+  getIncidenciasCount: async () => {
+    try {
+      const response = await fetch(`${BASE}/incidencias/count`);
+      if (!response.ok) return { total: 0 };
+      return await response.json();
+    } catch (error) {
+      console.error("Error al obtener conteo de incidencias:", error);
+      return { total: 0 };
+    }
+  },
   
+  getIncidencias: () => fetch(`${BASE}/incidencias`).then(r => r.json()),
+
   createIncidencia: (data: any) => fetch(`${BASE}/incidencias`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

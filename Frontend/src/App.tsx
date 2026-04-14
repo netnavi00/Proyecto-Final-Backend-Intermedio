@@ -4,18 +4,20 @@ import { WeatherWidget } from './components/WeatherWidget';
 import { EmployeeTable } from './components/EmployeeTable';
 import { EmployeeDetailView } from './components/EmployeeDetailView';
 import { IncidentsModule } from './components/IncidentsModule';
-// --- IMPORTACIÓN CRUCIAL ---
 import { DepartmentsModule } from './components/DepartmentsModule'; 
 import { api } from './services/api';
 import { Employee, EmployeeDetail, Department } from './types.js';
-import { Users, Building2, AlertCircle, TrendingUp, Loader2 } from 'lucide-react';
+import { Users, Building2, AlertCircle, TrendingUp, Loader2, DollarSign, Gift, ChevronRight, ChevronLeft, PersonStanding } from 'lucide-react';
 import { NewsWidget } from './components/NewsWidget'; 
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [incidentsCount, setIncidentsCount] = useState(0); // <-- Variable definida
+  const [incidentsCount, setIncidentsCount] = useState(0); 
+  const [dashboardView, setDashboardView] = useState('distribucion');
+  const [growthCardView, setGrowthCardView] = useState<'antiguedad' | 'genero'>('antiguedad');
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +25,14 @@ export default function App() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [empRes, deptRes] = await Promise.all([
+      const [empRes, deptRes, countRes] = await Promise.all([
         api.getEmployees(),
-        api.getDepartments()
+        api.getDepartments(),
+        api.getIncidenciasCount().catch(() => ({ total: 0 }))
       ]);
-      setEmployees(empRes); 
-      setDepartments(deptRes);
+      setEmployees(empRes || []); 
+      setDepartments(deptRes || []);
+      setIncidentsCount(countRes.total || 0);
       setError(null);
     } catch (err) {
       setError('No se pudo conectar con el servidor.');
@@ -42,114 +46,224 @@ export default function App() {
     fetchData();
   }, [fetchData]);
 
+  // --- LÓGICA DE ANTIGÜEDAD Y GÉNERO ---
+  const calcularAntiguedadPromedio = () => {
+    if (employees.length === 0) return "0 años";
+    const hoy = new Date();
+    const totalMeses = employees.reduce((acc, emp) => {
+      const inicio = new Date(emp.hire_date);
+      return acc + (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+    }, 0);
+    return `${(totalMeses / employees.length / 12).toFixed(1)} años`;
+  };
+
+  const hombres = employees.filter(e => e.gender?.toLowerCase() === 'male' || e.gender?.toLowerCase() === 'm').length;
+  const mujeres = employees.length - hombres;
+  const porcentajeHombres = employees.length > 0 ? ((hombres / employees.length) * 100).toFixed(0) : 0;
+  const porcentajeMujeres = employees.length > 0 ? (100 - Number(porcentajeHombres)).toFixed(0) : 0;
+
+  // --- PROCESAMIENTO PARA GRÁFICAS ---
+  const dataDepto = departments.map(dept => ({
+    name: dept.dept_name,
+    cantidad: employees.filter(emp => emp.department === dept.dept_name).length,
+  })).filter(d => d.cantidad > 0);
+
+  const dataNomina = departments.map(dept => ({
+    name: dept.dept_name,
+    gasto: employees
+      .filter(emp => emp.department === dept.dept_name)
+      .reduce((acc, emp) => acc + Number(emp.salary || 0), 0),
+  })).filter(d => d.gasto > 0);
+
+  const proximosAniversarios = employees
+    .filter(emp => emp.hire_date && new Date(emp.hire_date).getMonth() === new Date().getMonth())
+    .slice(0, 5);
+
+  const mxnFormatter = new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: 'MXN', maximumFractionDigits: 0
+  });
+
   const handleSelectEmployee = async (id: number) => {
     try {
-    setLoading(true); // Un estado de carga global ayuda mucho
-    const data = await api.getEmployeeById(id);
-    
-    if (data) {
-      setSelectedEmployee(data);
-      setActiveTab('employee-detail'); // Cambiamos a la vista de la gráfica
-      window.scrollTo(0, 0); // Opcional: sube al inicio de la página
-    }
-  } catch (error) {
-    console.error("Error al cargar el detalle:", error);
-    alert("No se pudo cargar el perfil del empleado");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleBackToList = () => {
-    setSelectedEmployee(null);
-    setActiveTab('employees');
-    fetchData(); 
+      setLoading(true);
+      const data = await api.getEmployeeById(id);
+      if (data) { setSelectedEmployee(data); setActiveTab('employee-detail'); }
+    } catch (error) { alert("Error al cargar perfil"); } 
+    finally { setLoading(false); }
   };
 
   const renderContent = () => {
     if (loading && !employees.length) {
       return (
-        <div className="flex flex-col items-center justify-center h-[60vh] text-slate-500 gap-4">
+        <div className="flex flex-col items-center justify-center h-[60vh] text-slate-600 gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-          <p className="font-medium">Cargando datos del sistema...</p>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="bg-red-50 border border-red-200 p-8 rounded-3xl text-center space-y-4">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-          <h3 className="text-xl font-bold text-red-900">Error de Conexión</h3>
-          <p className="text-red-700 max-w-md mx-auto">{error}</p>
-          <button onClick={fetchData} className="bg-red-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-red-700">
-            Reintentar
-          </button>
+          <p className="font-bold">Sincronizando panel corporativo...</p>
         </div>
       );
     }
 
     switch (activeTab) {
       case 'dashboard':
-          return (
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* 1. StatCards (Se quedan arriba como pediste) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Empleados" value={employees.length} icon={Users} color="bg-blue-500" />
-          <StatCard title="Departamentos" value={departments.length} icon={Building2} color="bg-purple-500" />
-          <StatCard title="Nuevas Incidencias" value={incidentsCount} icon={AlertCircle} color="bg-amber-500" />
-          <StatCard title="Crecimiento" value="+4.2%" icon={TrendingUp} color="bg-emerald-500" />
-        </div>
-
-        {/* 2. Cuerpo Principal: Gráfica General + NewsWidget */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Columna Izquierda (2/3): Gráfica de Resumen de la Empresa */}
-          <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-slate-900">Resumen Operativo</h3>
-              <p className="text-sm text-slate-400 font-medium">Actividad global de recursos humanos</p>
-            </div>
-            <div className="flex-1 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 flex items-center justify-center">
-              {/* Aquí puedes poner una versión simplificada de tu gráfica o un mensaje de bienvenida */}
-              <p className="text-slate-400 italic">Área reservada para métricas globales</p>
-            </div>
-          </div>
-
-          {/* Columna Derecha (1/3): Noticias en tiempo real */}
-          <div className="lg:col-span-1">
-            <NewsWidget />
-          </div>
-        </div>
-      </div>
-    );
-      case 'employees':
         return (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <h2 className="text-2xl font-bold text-slate-900">Gestión de Empleados</h2>
-            <EmployeeTable employees={employees} onSelectEmployee={handleSelectEmployee} />
+          <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard title="Total Empleados" value={employees.length} icon={Users} color="bg-blue-500" />
+              <StatCard title="Departamentos" value={departments.length} icon={Building2} color="bg-purple-500" />
+              <StatCard title="Nuevas Incidencias" value={incidentsCount} icon={AlertCircle} color="bg-amber-500" />
+              
+              {/* Card de Estabilidad / Diversidad - ALTURA FIJA [102px] */}
+              <div className="relative group bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-[102px]">
+                
+                {/* Flechas de Navegación */}
+                <div className="absolute top-3 right-3 flex gap-1 bg-white/70 backdrop-blur-sm p-1 rounded-lg border border-slate-200 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => setGrowthCardView(growthCardView === 'antiguedad' ? 'genero' : 'antiguedad')}
+                    className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-emerald-600"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button 
+                    onClick={() => setGrowthCardView(growthCardView === 'antiguedad' ? 'genero' : 'antiguedad')}
+                    className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-emerald-600"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+
+                {growthCardView === 'antiguedad' ? (
+                  <div className="p-6 flex items-center gap-4 h-full">
+                    <div className="bg-emerald-500 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0">
+                      <TrendingUp className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-600 mb-0.5">Estabilidad (Promedio)</p>
+                      <p className="text-2xl font-black text-slate-900 tracking-tight">{calcularAntiguedadPromedio()}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-full w-full">
+                    <div className="flex-1 bg-blue-50 p-4 flex flex-col justify-center border-r border-slate-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1 bg-white rounded-md text-blue-600 border border-blue-100">
+                          <PersonStanding size={12} />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Hombres</p>
+                      </div>
+                      <p className="text-xl font-black text-slate-900 leading-none">{porcentajeHombres}%</p>
+                      <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{hombres} Pers.</p>
+                    </div>
+
+                    <div className="flex-1 bg-pink-50/50 p-4 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-1 bg-white rounded-md text-pink-600 border border-pink-100">
+                          <PersonStanding size={12} className="rotate-180" />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Mujeres</p>
+                      </div>
+                      <p className="text-xl font-black text-slate-900 leading-none">{porcentajeMujeres}%</p>
+                      <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{mujeres} Pers.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Resto del Dashboard */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col h-[500px]">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Resumen Operativo</h3>
+                    <p className="text-sm text-slate-500 font-medium italic">Análisis de capital humano</p>
+                  </div>
+
+                  <div className="flex bg-slate-100 p-1 rounded-2xl gap-1">
+                    {[
+                      { id: 'distribucion', label: 'Personal', icon: Users },
+                      { id: 'nomina', label: 'Nómina', icon: DollarSign },
+                      { id: 'aniversarios', label: 'Eventos', icon: Gift }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setDashboardView(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          dashboardView === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        <tab.icon size={14} />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex-1 min-h-[300px] w-full">
+                  {dashboardView === 'distribucion' && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dataDepto}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} />
+                        <YAxis hide />
+                        <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                        <Bar dataKey="cantidad" fill="#4f46e5" radius={[10, 10, 0, 0]} barSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+
+                  {dashboardView === 'nomina' && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={dataNomina}>
+                        <defs>
+                          <linearGradient id="colorGasto" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 12}} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 11}} tickFormatter={(v) => mxnFormatter.format(v)} />
+                        <Tooltip 
+                          formatter={(val: any) => [mxnFormatter.format(Number(val)), "Costo Nómina"]}
+                          contentStyle={{ borderRadius: '12px', border: 'none' }}
+                        />
+                        <Area type="monotone" dataKey="gasto" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorGasto)" strokeWidth={3} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+
+                  {dashboardView === 'aniversarios' && (
+                    <div className="space-y-4 overflow-y-auto h-full pr-2">
+                      {proximosAniversarios.map((emp, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-200 font-bold text-indigo-600">
+                              {emp.first_name[0]}{emp.last_name[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-700">{emp.first_name} {emp.last_name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium italic">Aniversario Laboral</p>
+                            </div>
+                          </div>
+                          <div className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg">
+                             {new Date(emp.hire_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="lg:col-span-1 h-[500px]">
+                <NewsWidget />
+              </div>
+            </div>
           </div>
         );
-      
-      // --- VISTA DETALLE MODIFICADA ---
-      case 'employee-detail':
-        return (
-          <EmployeeDetailView 
-            employee={selectedEmployee} 
-            onBack={handleBackToList} 
-            // Al actualizar (por ejemplo, al subir foto), recargamos los datos específicos del ID actual
-            onUpdate={() => selectedEmployee && handleSelectEmployee(selectedEmployee.personal.emp_no)} 
-          />
-        );
-
-      // --- CAMBIO AQUÍ: Llamamos al componente externo con toda su lógica ---
-      case 'departments':
-        return <DepartmentsModule onSelectEmployee={handleSelectEmployee} />;
-
-      case 'incidents':
-        return <IncidentsModule />;
-      default:
-        return null;
+      case 'employees': return <EmployeeTable employees={employees} onSelectEmployee={handleSelectEmployee} />;
+      case 'employee-detail': return <EmployeeDetailView employee={selectedEmployee} onBack={() => setActiveTab('employees')} onUpdate={fetchData} />;
+      case 'departments': return <DepartmentsModule onSelectEmployee={handleSelectEmployee} />;
+      case 'incidents': return <IncidentsModule />;
+      default: return null;
     }
   };
 
@@ -157,16 +271,14 @@ export default function App() {
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="flex-1 flex flex-col">
-        <header className="h-20 px-8 flex items-center justify-between sticky top-0 bg-slate-50/80 backdrop-blur-md z-10">
+        <header className="h-20 px-8 flex items-center justify-between sticky top-0 bg-slate-50/80 backdrop-blur-md z-10 border-b border-slate-200">
           <div>
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Panel de Control</h2>
-            <p className="text-lg font-bold text-slate-800 capitalize">
-              {activeTab === 'employee-detail' ? 'Detalle de Empleado' : activeTab}
-            </p>
+            <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">Management System</h2>
+            <p className="text-xl font-bold text-slate-800 capitalize">{activeTab}</p>
           </div>
           <WeatherWidget />
         </header>
-        <div className="p-8 max-w-7xl mx-auto w-full">
+        <div className="p-8 max-w-[1600px] mx-auto w-full">
           {renderContent()}
         </div>
       </main>
@@ -176,13 +288,13 @@ export default function App() {
 
 function StatCard({ title, value, icon: Icon, color }: any) {
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-      <div className={`${color} w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-current/20`}>
+    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1 h-[102px]">
+      <div className={`${color} w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg`}>
         <Icon className="w-6 h-6" />
       </div>
       <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        <p className="text-sm font-bold text-slate-600 mb-0.5">{title}</p>
+        <p className="text-2xl font-black text-slate-900 tracking-tight">{value}</p>
       </div>
     </div>
   );
