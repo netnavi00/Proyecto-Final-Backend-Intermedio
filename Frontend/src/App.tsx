@@ -21,7 +21,20 @@ export default function App() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(false); // Nuevo estado Dark Mode
+  const [darkMode, setDarkMode] = useState(() => {
+  const savedMode = localStorage.getItem('theme');
+    return savedMode === 'dark' || (!savedMode && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }
+  }, [darkMode]);
 
   const fetchData = useCallback(async () => {
     try {
