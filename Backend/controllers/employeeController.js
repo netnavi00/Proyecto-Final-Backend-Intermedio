@@ -72,7 +72,7 @@ const employeeController = {
         }
     },
 
-    // 3. Subir Foto
+    // 3. Subir Fotogit push -u origin main
     uploadPhoto: async (req, res) => {
         const { id } = req.params;
         if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
