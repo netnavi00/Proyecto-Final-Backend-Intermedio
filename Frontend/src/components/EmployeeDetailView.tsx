@@ -13,7 +13,6 @@ import {
   Briefcase, 
   Calendar, 
   DollarSign, 
-  User, 
   Camera, 
   Trash2, 
   Loader2,
@@ -32,7 +31,7 @@ export const EmployeeDetailView: React.FC<EmployeeDetailViewProps> = ({ employee
   const [loading, setLoading] = useState(false);
   const BACKEND_URL = 'http://localhost:3000';
 
-  // --- PROTECCIÓN DE DATOS (Evita el pantallazo blanco) ---
+  // --- PROTECCIÓN DE DATOS ---
   if (!employee || !employee.personal) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-500">
@@ -45,6 +44,11 @@ export const EmployeeDetailView: React.FC<EmployeeDetailViewProps> = ({ employee
   const { personal } = employee;
   const safeSalaries = Array.isArray(employee.salaries) ? employee.salaries : [];
   const safePuestos = Array.isArray(employee.puestos) ? employee.puestos : [];
+
+  // --- LÓGICA DE AVATAR (DiceBear) ---
+  const avatarUrl = personal.photo_url 
+    ? `${BACKEND_URL}${personal.photo_url}` 
+    : `https://api.dicebear.com/7.x/initials/svg?seed=${personal.first_name}%20${personal.last_name}&backgroundColor=4f46e5,6366f1,818cf8&fontFamily=Arial,sans-serif&bold=true`;
 
   // Preparación de datos para la gráfica
   const salaryData = [...safeSalaries].reverse().map(s => ({
@@ -107,14 +111,12 @@ export const EmployeeDetailView: React.FC<EmployeeDetailViewProps> = ({ employee
             <div className="w-32 h-32 bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl ring-1 ring-slate-200 flex items-center justify-center">
               {loading ? (
                 <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-              ) : personal.photo_url ? (
+              ) : (
                 <img 
-                  src={`${BACKEND_URL}${personal.photo_url}`} 
+                  src={avatarUrl} 
                   alt="Perfil" 
                   className="w-full h-full object-cover" 
                 />
-              ) : (
-                <User className="w-16 h-16 text-slate-300" />
               )}
             </div>
 
@@ -232,7 +234,6 @@ export const EmployeeDetailView: React.FC<EmployeeDetailViewProps> = ({ employee
   );
 };
 
-// Componente auxiliar para las filas de información
 function InfoRow({ icon: Icon, label, value }: { icon: any, label: string, value: string }) {
   return (
     <div className="flex items-center justify-between group">

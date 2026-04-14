@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Search, User, ChevronRight, Briefcase, DollarSign, Calendar, Building2 } from 'lucide-react';
+import { Search, ChevronRight, Briefcase, DollarSign, Calendar, Building2 } from 'lucide-react';
 import { Employee } from '../types.js';
-import { cn } from '../lib/utils';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -50,7 +49,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, onSelec
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre Completo</th>
-                {/* COLUMNA NUEVA */}
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Departamento</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contratación</th>
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Puesto</th>
@@ -59,83 +57,81 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, onSelec
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredEmployees.map((emp) => (
-                <tr 
-                  key={emp.emp_no} 
-                  className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
-                  onClick={() => onSelectEmployee(emp.emp_no)}
-                >
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-mono font-medium text-slate-600">#{emp.emp_no}</span>
-                  </td>
+              {filteredEmployees.map((emp) => {
+                // LÓGICA DE AVATAR (DICEBEAR): Consistente con las Cards
+                const avatarUrl = emp.photo_url 
+                  ? `${BACKEND_URL}${emp.photo_url}` 
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${emp.first_name}%20${emp.last_name}&backgroundColor=4f46e5,6366f1,818cf8&fontFamily=Arial,sans-serif&bold=true`;
 
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shadow-sm group-hover:border-indigo-200 transition-all">
-                        {emp.photo_url ? (
+                return (
+                  <tr 
+                    key={emp.emp_no} 
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                    onClick={() => onSelectEmployee(emp.emp_no)}
+                  >
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono font-medium text-slate-600">#{emp.emp_no}</span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shadow-sm group-hover:border-indigo-200 transition-all">
                           <img 
-                            src={`${BACKEND_URL}${emp.photo_url}`} 
+                            src={avatarUrl} 
                             alt={`${emp.first_name}`} 
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src = ''; 
-                                (e.target as HTMLImageElement).className = 'hidden';
-                            }}
                           />
-                        ) : (
-                          <User className="w-5 h-5 text-slate-400" />
-                        )}
+                        </div>
+                        <span className="text-sm font-bold text-slate-800">
+                          {emp.first_name} {emp.last_name}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-slate-800">
-                        {emp.first_name} {emp.last_name}
-                      </span>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* CELDA DE DEPARTAMENTO */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold uppercase tracking-wider">
-                        {emp.department || 'Sin Depto'}
-                      </span>
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold uppercase tracking-wider">
+                          {emp.department || 'Sin Depto'}
+                        </span>
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4 text-sm text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      {formatDate(emp.hire_date)}
-                    </div>
-                  </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        {formatDate(emp.hire_date)}
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-sm text-slate-700 font-medium capitalize">
-                        {emp.puesto || 'sin título'} 
-                      </span>
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-sm text-slate-700 font-medium capitalize">
+                          {emp.puesto || 'sin título'} 
+                        </span>
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-emerald-600 font-bold text-sm">
-                      <DollarSign className="w-3.5 h-3.5" />
-                      <span>
-                        {emp.salary 
-                          ? Number(emp.salary).toLocaleString('es-MX') 
-                          : '---'}
-                      </span>
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-emerald-600 font-bold text-sm">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        <span>
+                          {emp.salary 
+                            ? Number(emp.salary).toLocaleString('es-MX') 
+                            : '---'}
+                        </span>
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4 text-right">
-                    <div className="inline-flex p-2 text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all">
-                      <ChevronRight className="w-5 h-5" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex p-2 text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all">
+                        <ChevronRight className="w-5 h-5" />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

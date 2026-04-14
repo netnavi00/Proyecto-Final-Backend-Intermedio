@@ -9,11 +9,13 @@ import { DepartmentsModule } from './components/DepartmentsModule';
 import { api } from './services/api';
 import { Employee, EmployeeDetail, Department } from './types.js';
 import { Users, Building2, AlertCircle, TrendingUp, Loader2 } from 'lucide-react';
+import { NewsWidget } from './components/NewsWidget'; 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [incidentsCount, setIncidentsCount] = useState(0); // <-- Variable definida
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,20 +91,38 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard title="Total Empleados" value={employees.length} icon={Users} color="bg-blue-500" />
-              <StatCard title="Departamentos" value={departments.length} icon={Building2} color="bg-purple-500" />
-              <StatCard title="Nuevas Incidencias" value={12} icon={AlertCircle} color="bg-amber-500" />
-              <StatCard title="Crecimiento" value="+4.2%" icon={TrendingUp} color="bg-emerald-500" />
+          return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        {/* 1. StatCards (Se quedan arriba como pediste) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard title="Total Empleados" value={employees.length} icon={Users} color="bg-blue-500" />
+          <StatCard title="Departamentos" value={departments.length} icon={Building2} color="bg-purple-500" />
+          <StatCard title="Nuevas Incidencias" value={incidentsCount} icon={AlertCircle} color="bg-amber-500" />
+          <StatCard title="Crecimiento" value="+4.2%" icon={TrendingUp} color="bg-emerald-500" />
+        </div>
+
+        {/* 2. Cuerpo Principal: Gráfica General + NewsWidget */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Columna Izquierda (2/3): Gráfica de Resumen de la Empresa */}
+          <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col min-h-[400px]">
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Resumen Operativo</h3>
+              <p className="text-sm text-slate-400 font-medium">Actividad global de recursos humanos</p>
             </div>
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-slate-900">Listado de Personal Reciente</h2>
-              <EmployeeTable employees={employees} onSelectEmployee={handleSelectEmployee} />
+            <div className="flex-1 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 flex items-center justify-center">
+              {/* Aquí puedes poner una versión simplificada de tu gráfica o un mensaje de bienvenida */}
+              <p className="text-slate-400 italic">Área reservada para métricas globales</p>
             </div>
           </div>
-        );
+
+          {/* Columna Derecha (1/3): Noticias en tiempo real */}
+          <div className="lg:col-span-1">
+            <NewsWidget />
+          </div>
+        </div>
+      </div>
+    );
       case 'employees':
         return (
           <div className="space-y-6 animate-in fade-in duration-500">

@@ -10,7 +10,11 @@ export const WeatherWidget = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const API_KEY = 'COLOCA KEY AQUI'; 
+
+
+  const API_KEY = 'f0d31ab118ad9dbfe0d08c5c689ea5c2'; 
+
+
 
   // --- CERRAR SUGERENCIAS AL CLICKEAR FUERA ---
   useEffect(() => {
