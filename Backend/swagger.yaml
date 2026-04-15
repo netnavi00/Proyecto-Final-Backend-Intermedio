@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  title: DataWork API
+  version: 1.0.0
+  description: Documentación completa de la API de Gestión de Recursos Humanos. Incluye gestión de empleados, fotos, departamentos e incidencias.
+servers:
+  - url: http://localhost:3000
+    description: Servidor Local
+
+tags:
+  - name: Employees
+    description: Gestión de personal y fotos de perfil
+  - name: Departments
+    description: Información de áreas y departamentos
+  - name: Incidencias
+    description: Control de asistencias, faltas y permisos
+
+paths:
+  # --- EMPLOYEES ---
+  /api/employees:
+    get:
+      summary: Obtener todos los empleados
+      tags: [Employees]
+      responses:
+        '200':
+          description: Lista de empleados obtenida con éxito
+  /api/employees/{id}:
+    get:
+      summary: Obtener detalle de un empleado
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos del empleado encontrados
+  /api/employees/{id}/photo:
+    post:
+      summary: Subir o actualizar foto de perfil
+      description: Utiliza Multer para procesar la imagen
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Foto subida correctamente
+    delete:
+      summary: Eliminar foto de perfil
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Foto eliminada correctamente
+
+  # --- DEPARTMENTS ---
+  /api/departments:
+    get:
+      summary: Listar todos los departamentos
+      tags: [Departments]
+      responses:
+        '200':
+          description: Lista de departamentos
+  /api/departments/{id}/employees:
+    get:
+      summary: Listar empleados de un departamento específico
+      tags: [Departments]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de empleados del área
+
+  # --- INCIDENCIAS ---
+  /api/incidencias:
+    get:
+      summary: Consultar historial de incidencias
+      tags: [Incidencias]
+      responses:
+        '200':
+          description: Lista de incidencias
+    post:
+      summary: Registrar una nueva incidencia (falta, retardo, etc.)
+      tags: [Incidencias]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_empleado: { type: integer }
+                tipo: { type: string }
+                fecha: { type: string, format: date }
+      responses:
+        '201':
+          description: Incidencia registrada
+  /api/incidencias/{id}:
+    patch:
+      summary: Actualizar estado de una incidencia
+      tags: [Incidencias]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Estado actualizado con éxito
+    delete:
+      summary: Eliminar registro de incidencia
+      tags: [Incidencias]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Registro eliminado

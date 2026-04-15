@@ -9,12 +9,12 @@ const employeeController = require('../controllers/employeeController');
 const incidenciaController = require('../controllers/incidenciaController');
 const deptController = require('../controllers/deptController'); 
 
-// --- CONFIGURACIÓN DE MULTER (Para fotos) ---
+// --- CONFIGURACIÓN DE MULTER (Gestión de Fotos) ---
 const storage = multer.diskStorage({
-    destination: 'uploads/',
-    filename: (req, file, cb) => {
-        cb(null, `emp-${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
-    }
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    cb(null, `emp-${req.params.id}-${Date.now()}${path.extname(file.originalname)}`);
+  }
 });
 const upload = multer({ storage });
 
