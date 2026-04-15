@@ -10,8 +10,7 @@ const apiRoutes = require('./routes/api');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 2. CONFIGURACIÓN DE SWAGGER (Vía archivo externo)
-// Cargamos el archivo que creaste en el paso anterior
+// 2. CONFIGURACIÓN DE SWAGGER (Vía archivo swagger.yaml)
 const swaggerDocument = YAML.load('./swagger.yaml');
 
 // 3. MIDDLEWARES
@@ -22,7 +21,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 5. RUTAS PARA LA DOCUMENTACIÓN
-// Aquí servimos la documentación cargada desde el YAML
+// Aquí se sirve la documentación cargada desde el YAML
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // 6. RUTAS DE LA API

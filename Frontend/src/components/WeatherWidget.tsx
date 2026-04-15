@@ -17,7 +17,7 @@ export const WeatherWidget = () => {
 
   useEffect(() => {
     const fetchWeather = async (lat: number, lon: number) => {
-      // Verificación de seguridad por si olvidaste poner la KEY en el .env
+      // Verificación de seguridad por si no hay la KEY en el .env
       if (!API_KEY) {
         console.error("⚠️ No se encontró la VITE_WEATHER_API_KEY en el archivo .env");
         setLoading(false);
@@ -58,7 +58,6 @@ export const WeatherWidget = () => {
     </div>
   );
 
-  // ... (El resto del return se mantiene igual, ya que solo cambiamos la lógica de la API)
   return (
     <div className="flex items-center gap-6 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md px-6 py-2.5 rounded-3xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-3 border-r border-slate-200 dark:border-slate-700 pr-6">

@@ -8,7 +8,6 @@ export default {
   ],
   theme: {
     extend: {
-      // Aquí podrías añadir colores personalizados para tu modo oscuro si quisieras
     },
   },
   plugins: [],

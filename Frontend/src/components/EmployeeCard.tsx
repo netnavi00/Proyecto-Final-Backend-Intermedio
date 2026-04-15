@@ -2,11 +2,13 @@ import React from 'react';
 import { Briefcase, Building2, Calendar } from 'lucide-react';
 import { Employee } from '../types';
 
+// Componente para mostrar la tarjeta de un empleado
 interface EmployeeCardProps {
   employee: Employee;
   onClick: (emp: Employee) => void;
 }
 
+// Generamos la URL de la imagen, usando la foto del empleado o un avatar de DiceBear si no hay foto
 export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick }) => {
   const imageUrl = employee.photo_url 
     ? `http://localhost:3000${employee.photo_url}` 
@@ -17,6 +19,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
       onClick={() => onClick(employee)}
       className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all cursor-pointer group animate-in fade-in zoom-in duration-300"
     >
+{/* Sección superior: Foto, nombre y puesto */}
       <div className="flex items-start gap-4">
         <div className="relative">
           <img 
@@ -25,7 +28,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
             className="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-slate-700 group-hover:ring-indigo-100 dark:group-hover:ring-indigo-500/30 transition-all shadow-inner"
           />
         </div>
-
+{/* Nombre completo y puesto del empleado */}
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
             {employee.first_name} {employee.last_name}
@@ -38,7 +41,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
           </div>
         </div>
       </div>
-
+{/* Información adicional (departamento y fecha de ingreso)*/}
       <div className="mt-5 space-y-2.5">
         <div className="flex items-center gap-2 text-sm">
           <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 transition-colors">
@@ -48,7 +51,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
             {employee.department || 'Sin oficina'}
           </span>
         </div>
-
+{/* Fecha de ingreso*/}
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <div className="p-2 bg-slate-100 dark:bg-slate-900 rounded-lg">
             <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
@@ -58,7 +61,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee, onClick })
           </span>
         </div>
       </div>
-
+{/* Botón para ver perfil*/}
       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
         <span className="text-[10px] font-mono font-bold text-slate-300 dark:text-slate-600 uppercase">Ref: #{employee.emp_no}</span>
         <div className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">

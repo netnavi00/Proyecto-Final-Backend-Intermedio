@@ -5,7 +5,7 @@ export const NewsWidget = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // --- CAMBIO AQUÍ: Traemos la Key del .env ---
+  // Traemos la Key del .env 
   const API_KEY = import.meta.env.VITE_NEWS_API_KEY; 
   
   // Construimos la URL de forma dinámica

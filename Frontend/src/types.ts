@@ -1,3 +1,10 @@
+
+// Definición de tipos para la aplicación DataWork
+// * - 'Employee': Representa la información básica de un empleado.
+// * - 'EmployeeDetail': Contiene detalles adicionales como salarios e historial de puestos.
+// * - 'Incidencia': Modela las incidencias reportadas por los empleados.
+// * - 'Department': Representa un departamento dentro de la empresa.
+
 export interface Employee {
   emp_no: number;
   first_name: string;

@@ -2,7 +2,7 @@
 const db = require('../config/db');
 
 const deptController = {
-    // Obtener todos los departamentos (lo que ya tienes)
+    // Obtener todos los departamentos
     getAll: async (req, res) => {
         try {
             const [rows] = await db.query('SELECT * FROM departments ORDER BY dept_name');
@@ -12,12 +12,12 @@ const deptController = {
         }
     },
 
-    // NUEVO: Obtener empleados por ID de departamento
+    //Obtener empleados por ID de departamento
     getEmployeesByDept: async (req, res) => {
         const { id } = req.params; 
         console.log("--- SOLICITANDO EMPLEADOS PARA DEPTO:", id);
         try {
-            // Esta consulta es la clave para que la Card se llene correctamente
+            // Card se llene correctamente con esta consulta
             const sql = `
                 SELECT 
                     e.emp_no, 

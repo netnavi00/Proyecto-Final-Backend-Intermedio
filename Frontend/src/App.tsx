@@ -26,6 +26,7 @@ export default function App() {
     return savedMode === 'dark' || (!savedMode && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
+  // Efecto para aplicar el tema oscuro o claro según la preferencia del usuario
   useEffect(() => {
   if (darkMode) {
     document.documentElement.classList.add('dark');
@@ -36,6 +37,7 @@ export default function App() {
   }
   }, [darkMode]);
 
+  // Función para cargar datos de empleados, departamentos e incidencias
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -56,7 +58,7 @@ export default function App() {
       setLoading(false);
     }
   }, []);
-
+// Efecto para cargar los datos al montar el componente
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -114,6 +116,7 @@ export default function App() {
         </div>
       );
     }
+
 
     switch (activeTab) {
       case 'dashboard':
@@ -308,6 +311,7 @@ export default function App() {
   );
 }
 
+// Componente reutilizable para mostrar estadísticas en el dashboard
 function StatCard({ title, value, icon: Icon, color }: any) {
   return (
     <div className="bg-gray-100 dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-1 h-[102px]">

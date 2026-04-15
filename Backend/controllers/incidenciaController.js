@@ -33,14 +33,14 @@ const incidenciaController = {
 
     updateStatus: async (req, res) => {
         const { id } = req.params;
-        // Extraemos los datos del body
+        // Extraer los datos del body
         const { emp_no, tipo, fecha, descripcion, estatus } = req.body;
         
         try {
-            // Limpiamos la fecha solo si existe, si no, pasamos null
+            // Limpiar la fecha solo si existe, si no, pasamos null
             const fechaLimpia = fecha ? fecha.split('T')[0] : null;
 
-            // Usamos COALESCE: si el parámetro es NULL, mantiene el valor actual de la columna
+            // Usar COALESCE: si el parámetro es NULL, mantiene el valor actual de la columna
             const sql = `
                 UPDATE incidencias_rrhh 
                 SET emp_no = COALESCE(?, emp_no), 
@@ -49,7 +49,8 @@ const incidenciaController = {
                     descripcion = COALESCE(?, descripcion), 
                     estatus = COALESCE(?, estatus) 
                 WHERE id_incidencia = ?`;
-                
+             
+            // Ejecutar la consulta con los parámetros, pasando null para los que no se actualizan
             const [result] = await db.query(sql, [
                 emp_no || null, 
                 tipo || null, 
@@ -70,6 +71,7 @@ const incidenciaController = {
         }
     },
 
+    // Eliminar incidencia
     delete: async (req, res) => {
         const { id } = req.params;
         try {
