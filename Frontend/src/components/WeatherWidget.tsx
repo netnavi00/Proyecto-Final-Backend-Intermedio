@@ -4,9 +4,10 @@ import { Cloud, Sun, CloudRain, Wind, MapPin, Loader2, Calendar } from 'lucide-r
 export const WeatherWidget = () => {
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const API_KEY = 'f0d31ab118ad9dbfe0d08c5c689ea5c2'; // Reemplaza con tu llave de OpenWeather
 
-  // 1. Obtener la fecha completa formateada
+  // --- CAMBIO AQUÍ: Usamos la variable de entorno de Vite ---
+  const API_KEY = import.meta.env.VITE_WEATHER_API_KEY; 
+
   const fechaCompleta = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long',
     day: 'numeric',
@@ -16,6 +17,13 @@ export const WeatherWidget = () => {
 
   useEffect(() => {
     const fetchWeather = async (lat: number, lon: number) => {
+      // Verificación de seguridad por si olvidaste poner la KEY en el .env
+      if (!API_KEY) {
+        console.error("⚠️ No se encontró la VITE_WEATHER_API_KEY en el archivo .env");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`
@@ -29,21 +37,19 @@ export const WeatherWidget = () => {
       }
     };
 
-    // 2. Intentar obtener ubicación del navegador
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           fetchWeather(position.coords.latitude, position.coords.longitude);
         },
         () => {
-          // Si el usuario rechaza, usamos una ubicación por defecto (CDMX)
-          fetchWeather(19.4326, -99.1332);
+          fetchWeather(19.4326, -99.1332); // CDMX por defecto
         }
       );
     } else {
       fetchWeather(19.4326, -99.1332);
     }
-  }, []);
+  }, [API_KEY]); // Añadimos API_KEY como dependencia
 
   if (loading) return (
     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -52,10 +58,9 @@ export const WeatherWidget = () => {
     </div>
   );
 
+  // ... (El resto del return se mantiene igual, ya que solo cambiamos la lógica de la API)
   return (
     <div className="flex items-center gap-6 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md px-6 py-2.5 rounded-3xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm transition-colors duration-300">
-      
-      {/* LADO IZQUIERDO: FECHA COMPLETA */}
       <div className="flex items-center gap-3 border-r border-slate-200 dark:border-slate-700 pr-6">
         <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
           <Calendar size={18} />
@@ -70,7 +75,6 @@ export const WeatherWidget = () => {
         </div>
       </div>
 
-      {/* LADO DERECHO: CLIMA AUTOMÁTICO */}
       <div className="flex items-center gap-4">
         {weather && (
           <>

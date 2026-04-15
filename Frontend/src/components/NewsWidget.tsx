@@ -5,11 +5,21 @@ export const NewsWidget = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_KEY = '4fece8ab18be41388349554fef2f8b89'; 
+  // --- CAMBIO AQUÍ: Traemos la Key del .env ---
+  const API_KEY = import.meta.env.VITE_NEWS_API_KEY; 
+  
+  // Construimos la URL de forma dinámica
   const URL = `https://newsapi.org/v2/everything?q=recursos+humanos+OR+empleo&language=es&sortBy=publishedAt&pageSize=8&apiKey=${API_KEY}`;
 
   useEffect(() => {
     const fetchNews = async () => {
+      // Verificación de seguridad
+      if (!API_KEY) {
+        console.error("⚠️ Falta VITE_NEWS_API_KEY en el archivo .env");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch(URL);
         const data = await res.json();
@@ -18,13 +28,13 @@ export const NewsWidget = () => {
           setNews(valid.slice(0, 5));
         }
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error al obtener noticias:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchNews();
-  }, []);
+  }, [URL, API_KEY]); // Dependencias para que React sepa cuándo refrescar
 
   if (loading) return (
     <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center h-[480px] transition-colors">
